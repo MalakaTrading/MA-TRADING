@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malaka Trading — Backtesting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Arial Black',Arial,sans-serif;}
+body{background:#111;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:24px 16px;}
+.outer{background:#1c1c1c;padding:20px 18px 16px;max-width:520px;width:100%;border-radius:12px;}
+.topbar{background:#f9a825;height:5px;border-radius:3px;margin-bottom:14px;}
+.logo-m{color:#fff;font-size:26px;font-weight:900;letter-spacing:4px;text-align:center;line-height:1;}
+.logo-t{color:#00e676;font-size:26px;font-weight:900;letter-spacing:4px;text-align:center;line-height:1;margin-bottom:3px;}
+.subtitle{color:#aaa;font-size:11px;font-weight:900;text-align:center;letter-spacing:2px;margin-bottom:12px;}
+.section{background:#232323;border-radius:8px;padding:11px;margin-bottom:10px;}
+.sec-lbl{color:#aaa;font-size:10px;letter-spacing:1px;margin-bottom:7px;font-weight:700;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px;}
+.inp-g{display:flex;flex-direction:column;gap:2px;}
+.inp-g span{font-size:9px;color:#888;letter-spacing:1px;}
+.inp-g input,.inp-g select,.inp-g textarea{width:100%;background:#2a2a2a;border:1.5px solid #444;color:#fff;border-radius:5px;padding:5px 6px;font-size:12px;font-weight:900;font-family:'Arial Black',Arial,sans-serif;}
+.inp-g input:focus,.inp-g select:focus,.inp-g textarea:focus{outline:none;border-color:#00e676;}
+.inp-g select option{background:#2a2a2a;}
+.inp-g textarea{resize:none;font-size:11px;}
+.dir-bar{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px;}
+.res-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:7px;}
+.tog{border:none;border-radius:5px;padding:6px 0;font-size:11px;font-weight:900;letter-spacing:1px;cursor:pointer;font-family:'Arial Black',Arial,sans-serif;opacity:0.35;transition:opacity .15s;}
+.tog.on{opacity:1;}
+.t-long{background:#00c853;color:#fff;}
+.t-short{background:#e53935;color:#fff;}
+.t-win{background:#00c853;color:#fff;}
+.t-loss{background:#e53935;color:#fff;}
+.t-be{background:#ffa726;color:#fff;}
+.add-btn{width:100%;background:#00e676;color:#000;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:900;letter-spacing:1px;cursor:pointer;font-family:'Arial Black',Arial,sans-serif;margin-top:2px;}
+.add-btn:active{opacity:0.8;}
+.stats-card{background:#282828;border-radius:8px;padding:11px;margin-bottom:10px;}
+.stats-hdr{background:#1565c0;text-align:center;font-size:11px;font-weight:900;letter-spacing:2px;color:#fff;border-radius:5px;padding:4px 0;margin-bottom:10px;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.stat-box{background:#1f1f1f;border-radius:6px;padding:8px;text-align:center;}
+.stat-val{font-size:20px;font-weight:900;}
+.stat-lbl{font-size:9px;color:#888;letter-spacing:1px;margin-top:2px;}
+.rr-table{width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed;}
+.rr-table th{font-size:9px;color:#888;letter-spacing:1px;padding:4px 4px;text-align:left;border-bottom:1px solid #333;}
+.rr-table td{font-size:11px;font-weight:900;color:#fff;padding:5px 4px;border-bottom:1px solid #222;}
+.streak-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.trades-card{background:#282828;border-radius:8px;padding:11px;margin-bottom:10px;}
+.trades-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.trades-title{font-size:11px;color:#aaa;font-weight:900;letter-spacing:1px;}
+.clear-btn{background:transparent;border:1px solid #555;color:#888;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Arial Black',Arial,sans-serif;}
+.clear-btn:hover{border-color:#e53935;color:#e53935;}
+.trade-row{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #222;}
+.trade-row:last-child{border-bottom:none;}
+.badge{border-radius:3px;padding:2px 6px;font-size:9px;font-weight:900;letter-spacing:1px;}
+.b-long{background:#00c853;color:#fff;}
+.b-short{background:#e53935;color:#fff;}
+.b-win{background:#00c853;color:#fff;}
+.b-loss{background:#e53935;color:#fff;}
+.b-be{background:#ffa726;color:#000;}
+.del-btn{background:transparent;border:none;color:#555;cursor:pointer;font-size:14px;font-weight:900;padding:0 2px;}
+.del-btn:hover{color:#e53935;}
+.footer{text-align:center;color:#555;font-size:10px;line-height:1.8;margin-top:6px;}
+.empty-msg{text-align:center;color:#555;font-size:11px;padding:12px 0;}
+.pnl-pos{color:#00e676;}
+.pnl-neg{color:#e53935;}
+.pnl-zero{color:#ffa726;}
+.custom-lbl{font-size:9px;color:#00e676;letter-spacing:1px;margin-top:2px;opacity:0.8;}
+.contracts-info{font-size:9px;color:#00e676;letter-spacing:1px;margin-top:2px;text-align:center;opacity:0.8;}
+</style>
+</head>
+<body>
+<div class="outer">
+  <div class="topbar"></div>
+  <div class="logo-m">MALAKA</div>
+  <div class="logo-t">TRADING</div>
+  <div class="subtitle">BACKTESTING</div>
+
+  <div class="section">
+    <div class="sec-lbl">INSTÄLLNINGAR</div>
+    <div class="g2">
+      <div class="inp-g">
+        <span>INSTRUMENT</span>
+        <select id="instrument" onchange="updateContractInfo()">
+          <option value="1">MGC1! ($1/tick)</option>
+          <option value="0.5">MNQ1! ($0.50/tick)</option>
+        </select>
+      </div>
+      <div class="inp-g">
+        <span>ANTAL KONTRAKT</span>
+        <input type="number" id="contracts" value="1" min="1" max="100" oninput="updateContractInfo()">
+        <div class="contracts-info" id="contractsInfo">$1.00 / tick totalt</div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">LÄGG TILL TRADE</div>
+    <div class="g2">
+      <div class="inp-g">
+        <span>DATUM</span>
+        <input type="date" id="tdate">
+      </div>
+      <div class="inp-g">
+        <span>TID</span>
+        <input type="time" id="ttime">
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="inp-g">
+        <span>RISK/REWARD</span>
+        <select id="rr" onchange="checkCustom()">
+          <option value="1:1">1:1</option>
+          <option value="1:1.5">1:1.5</option>
+          <option value="1:2">1:2</option>
+          <option value="1:2.5">1:2.5</option>
+          <option value="1:3">1:3</option>
+          <option value="1:4">1:4</option>
+          <option value="1:5">1:5</option>
+          <option value="1:6">1:6</option>
+          <option value="1:7">1:7</option>
+          <option value="1:8">1:8</option>
+          <option value="1:9">1:9</option>
+          <option value="2:1">2:1</option>
+          <option value="custom">Eget värde...</option>
+        </select>
+      </div>
+      <div class="inp-g">
+        <span>TICKS</span>
+        <input type="number" id="ticks" placeholder="100" min="0">
+      </div>
+    </div>
+
+    <div id="customRRWrap" style="display:none;margin-bottom:7px;">
+      <div class="inp-g">
+        <span>ANGE EGET R:R (ex. 1:3.5)</span>
+        <input type="text" id="customRR" placeholder="1:3.5">
+      </div>
+      <div class="custom-lbl">Skriv i formatet 1:X</div>
+    </div>
+
+    <div class="dir-bar">
+      <button class="tog t-long on" id="bLong" onclick="setDir('long')">LONG</button>
+      <button class="tog t-short" id="bShort" onclick="setDir('short')">SHORT</button>
+    </div>
+    <div class="res-bar">
+      <button class="tog t-win on" id="bWin" onclick="setRes('win')">WIN</button>
+      <button class="tog t-loss" id="bLoss" onclick="setRes('loss')">LOSS</button>
+      <button class="tog t-be" id="bBe" onclick="setRes('be')">BE</button>
+    </div>
+    <div class="inp-g" style="margin-bottom:7px;">
+      <span>ANTECKNING (valfri)</span>
+      <textarea id="note" rows="2" placeholder="Kommentar om traden..."></textarea>
+    </div>
+    <button class="add-btn" onclick="addTrade()">+ LÄGG TILL TRADE</button>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-hdr">SAMMANFATTNING</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="sWinRate" style="color:#00e676;">—</div>
+        <div class="stat-lbl">WIN RATE</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sPF" style="color:#5bc8f5;">—</div>
+        <div class="stat-lbl">PROFIT FACTOR</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sTicks">—</div>
+        <div class="stat-lbl">TOTAL TICKS</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sDollar">—</div>
+        <div class="stat-lbl">TOTAL P&L ($)</div>
+      </div>
+    </div>
+    <table class="rr-table">
+      <thead><tr><th>R:R</th><th>TRADES</th><th>WIN</th><th>LOSS</th><th>WIN%</th><th>P&L ($)</th></tr></thead>
+      <tbody id="rrBody"></tbody>
+    </table>
+    <div class="streak-row">
+      <div class="stat-box">
+        <div class="stat-val" id="sWStreak" style="color:#00e676;">—</div>
+        <div class="stat-lbl">BÄSTA WIN STREAK</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sLStreak" style="color:#e53935;">—</div>
+        <div class="stat-lbl">VÄRSTA LOSS STREAK</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trades-card">
+    <div class="trades-hdr">
+      <span class="trades-title" id="tradesTitle">TRADES (0)</span>
+      <button class="clear-btn" onclick="clearAll()">RENSA ALLA</button>
+    </div>
+    <div id="tradesList"><div class="empty-msg">Inga trades tillagda ännu</div></div>
+  </div>
+
+  <div class="footer">Malaka Trading • MA-T Indikator • TradingView</div>
+</div>
+
+<script>
+let trades=[], dir='long', res='win';
+
+function updateContractInfo(){
+  const tv=parseFloat(document.getElementById('instrument').value);
+  const c=parseInt(document.getElementById('contracts').value)||1;
+  document.getElementById('contractsInfo').textContent='$'+(tv*c).toFixed(2)+' / tick totalt';
+}
+
+function checkCustom(){
+  document.getElementById('customRRWrap').style.display=document.getElementById('rr').value==='custom'?'block':'none';
+}
+
+function getRR(){
+  const v=document.getElementById('rr').value;
+  return v==='custom'?(document.getElementById('customRR').value.trim()||'1:1'):v;
+}
+
+function setDir(d){
+  dir=d;
+  document.getElementById('bLong').classList.toggle('on',d==='long');
+  document.getElementById('bShort').classList.toggle('on',d==='short');
+}
+
+function setRes(r){
+  res=r;
+  document.getElementById('bWin').classList.toggle('on',r==='win');
+  document.getElementById('bLoss').classList.toggle('on',r==='loss');
+  document.getElementById('bBe').classList.toggle('on',r==='be');
+}
+
+function addTrade(){
+  const date=document.getElementById('tdate').value;
+  const time=document.getElementById('ttime').value;
+  const rr=getRR();
+  const ticks=parseInt(document.getElementById('ticks').value)||0;
+  const note=document.getElementById('note').value;
+  const tickVal=parseFloat(document.getElementById('instrument').value);
+  const contracts=parseInt(document.getElementById('contracts').value)||1;
+  const instrName=document.getElementById('instrument').selectedOptions[0].text.split('!')[0]+'!';
+  const signedTicks=res==='win'?ticks:res==='loss'?-ticks:0;
+  const dollar=signedTicks*tickVal*contracts;
+  trades.push({id:Date.now(),instrName,date,time,rr,ticks,signedTicks,dir,res,note,tickVal,contracts,dollar});
+  document.getElementById('ticks').value='';
+  document.getElementById('note').value='';
+  render();
+}
+
+function delTrade(id){trades=trades.filter(t=>t.id!==id);render();}
+function clearAll(){trades=[];render();}
+function render(){renderList();renderStats();}
+
+function renderList(){
+  document.getElementById('tradesTitle').textContent='TRADES ('+trades.length+')';
+  const el=document.getElementById('tradesList');
+  if(!trades.length){el.innerHTML='<div class="empty-msg">Inga trades tillagda \u00e4nnu</div>';return;}
+  el.innerHTML=[...trades].reverse().map(t=>{
+    const dateStr=t.date?t.date.split('-').reverse().join('/'):'—';
+    const pnlCol=t.dollar>0?'pnl-pos':t.dollar<0?'pnl-neg':'pnl-zero';
+    const pnlStr=(t.dollar>=0?'+$':'-$')+Math.abs(t.dollar).toFixed(0);
+    const tickStr=(t.signedTicks>=0?'+':'')+t.signedTicks+'t';
+    return`<div class="trade-row">
+      <span class="badge b-${t.dir}">${t.dir.toUpperCase()}</span>
+      <span style="color:#ccc;font-size:10px;">${t.instrName} ${dateStr} ${t.time||''} <span style="color:#888;">${t.rr}</span> <span style="color:#555;">${t.contracts}k</span>${t.note?'<br><span style="color:#666;font-weight:400;">'+t.note+'</span>':''}</span>
+      <span class="badge b-${t.res}">${t.res.toUpperCase()}</span>
+      <span class="${pnlCol}" style="font-size:11px;white-space:nowrap;">${tickStr}<br>${pnlStr}</span>
+      <button class="del-btn" onclick="delTrade(${t.id})">x</button>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  if(!trades.length){
+    ['sWinRate','sPF','sTicks','sDollar','sWStreak','sLStreak'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('rrBody').innerHTML='';
+    return;
+  }
+  const wins=trades.filter(t=>t.res==='win');
+  const losses=trades.filter(t=>t.res==='loss');
+  const decided=wins.length+losses.length;
+  const wr=decided>0?Math.round(wins.length/decided*100):0;
+  const totalWon=wins.reduce((s,t)=>s+t.ticks,0);
+  const totalLost=losses.reduce((s,t)=>s+t.ticks,0);
+  const pf=totalLost>0?(totalWon/totalLost).toFixed(2):'∞';
+  const netTicks=trades.reduce((s,t)=>s+t.signedTicks,0);
+  const netDollar=trades.reduce((s,t)=>s+t.dollar,0);
+  const wrCol=wr>=60?'#00e676':wr>=40?'#ffa726':'#e53935';
+  document.getElementById('sWinRate').textContent=wr+'%';
+  document.getElementById('sWinRate').style.color=wrCol;
+  document.getElementById('sPF').textContent=pf;
+  const tEl=document.getElementById('sTicks');
+  tEl.textContent=(netTicks>=0?'+':'')+netTicks;
+  tEl.style.color=netTicks>=0?'#00e676':'#e53935';
+  const dEl=document.getElementById('sDollar');
+  dEl.textContent=(netDollar>=0?'+$':'-$')+Math.abs(netDollar).toFixed(0);
+  dEl.className='stat-val '+(netDollar>0?'pnl-pos':netDollar<0?'pnl-neg':'pnl-zero');
+  const rrMap={};
+  trades.forEach(t=>{
+    if(!rrMap[t.rr])rrMap[t.rr]={w:0,l:0,be:0,ticks:0,dollar:0};
+    if(t.res==='win')rrMap[t.rr].w++;
+    else if(t.res==='loss')rrMap[t.rr].l++;
+    else rrMap[t.rr].be++;
+    rrMap[t.rr].ticks+=t.signedTicks;
+    rrMap[t.rr].dollar+=t.dollar;
+  });
+  document.getElementById('rrBody').innerHTML=Object.entries(rrMap).sort().map(([rr,d])=>{
+    const tot=d.w+d.l;
+    const wr2=tot>0?Math.round(d.w/tot*100):0;
+    const wrc=wr2>=60?'#00e676':wr2>=40?'#ffa726':'#e53935';
+    const dStr=(d.dollar>=0?'+$':'-$')+Math.abs(d.dollar).toFixed(0);
+    const dc=d.dollar>=0?'#00e676':'#e53935';
+    return`<tr><td style="color:#5bc8f5;">${rr}</td><td>${d.w+d.l+d.be}</td><td style="color:#00e676;">${d.w}</td><td style="color:#e53935;">${d.l}</td><td style="color:${wrc};">${wr2}%</td><td style="color:${dc};">${dStr}</td></tr>`;
+  }).join('');
+  let mws=0,mls=0,cws=0,cls=0;
+  trades.forEach(t=>{
+    if(t.res==='win'){cws++;cls=0;mws=Math.max(mws,cws);}
+    else if(t.res==='loss'){cls++;cws=0;mls=Math.max(mls,cls);}
+    else{cws=0;cls=0;}
+  });
+  document.getElementById('sWStreak').textContent=mws;
+  document.getElementById('sLStreak').textContent=mls;
+}
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('tdate').value=today;
+const now=new Date().toTimeString().slice(0,5);
+document.getElementById('ttime').value=now;
+updateContractInfo();
+</script>
+</body>
+</html>
